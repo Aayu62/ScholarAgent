@@ -1,4 +1,5 @@
 import streamlit as st
+import requests
 
 st.set_page_config(
     page_title="ScholarAgent",
@@ -73,6 +74,26 @@ with st.sidebar:
         "Upload Research Papers",
         type=["pdf"]
     )
+    if uploaded_file is not None:
+        files = {
+            "file" : (
+                uploaded_file.name,
+                uploaded_file.getvalue(),
+                "application/pdf"
+            )
+        }
+
+        with st.spinner("Processing PDF..."):
+            response = requests.post(
+                "http://127.0.0.1:8000/upload",
+                files=files
+            )
+        if response.status_code == 200:
+            st.success("PDF processed successfully")
+            st.json(response.json())
+        else:
+            st.error("Upload failed")
+
 
     st.markdown("---")
 
