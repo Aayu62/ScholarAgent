@@ -1,12 +1,12 @@
 import os
 import shutil
 
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.rag.pdf_processor import process_pdf
 from backend.rag.vector_store import create_vector_store
-from backend.rag.query_engine import retrieve_chunks
+from backend.rag.query_engine import query_rag as rag_query_engine
 
 app = FastAPI(title="ScholarAgent API")
 
@@ -42,13 +42,15 @@ async def upload_pdf(file: UploadFile = File(...)):
 
 @app.post("/query")
 async def query_rag(query: str):
-    docs = retrieve_chunks(query)
-    results = []
 
-    for doc in docs:
-        results.append(doc.page_content)
+    try:
+        result = rag_query_engine(query)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="ScholarAgent could not process this query."
+        ) from exc
 
-    return {
-        "query" : query,
-        "results" : results
-    }
+    return result
