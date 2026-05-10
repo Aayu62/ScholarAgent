@@ -112,9 +112,9 @@ with col1:
             sources = message.get("sources", [])
             if sources:
                 with st.expander("Retrieved sources"):
-                    for index, source in enumerate(sources, start=1):
-                        st.markdown(f"**Source {index}**")
-                        st.write(source)
+                    for source in sources:
+                        st.markdown(f"**Source {source['source']}**")
+                        st.write(source["content"])
 
     prompt = st.chat_input("Ask questions about your uploaded documents...")
 
@@ -147,9 +147,9 @@ with col1:
             st.write(answer)
             if sources:
                 with st.expander("Retrieved sources"):
-                    for index, source in enumerate(sources, start=1):
-                        st.markdown(f"**Source {index}**")
-                        st.write(source)
+                    for source in sources:
+                        st.markdown(f"**Source {source['source']}**")
+                        st.write(source["content"])
 
         st.session_state.messages.append({
             "role": "assistant",

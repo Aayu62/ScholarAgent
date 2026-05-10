@@ -1,7 +1,6 @@
 import os
 
-from backend.rag.vector_store import load_vector_store
-from backend.llm.gemini_service import generate_response
+from backend.agents.orchestrator import run_agents
 
 VECTOR_STORE_DIR = "data/vector_store"
 
@@ -14,21 +13,10 @@ def query_rag(query):
             "sources": []
         }
 
-    vector_store = load_vector_store()
-
-    docs = vector_store.similarity_search(
-        query,
-        k=4
-    )
-
-    context = "\n\n".join(
-        [doc.page_content for doc in docs]
-    )
-
-    answer = generate_response(query, context)
+    result = run_agents(query)
 
     return {
         "query": query,
-        "answer": answer,
-        "sources": [doc.page_content for doc in docs]
+        "answer": result["summary"],
+        "sources": result["citations"]
     }
