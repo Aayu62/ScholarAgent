@@ -43,13 +43,6 @@ h1, h2, h3 {
     color: white;
 }
 
-.agent-box {
-    padding: 0.8rem;
-    border-radius: 8px;
-    background-color: #1B2230;
-    border-left: 4px solid #5B8DEF;
-    margin-bottom: 0.8rem;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -106,7 +99,7 @@ with st.sidebar:
     st.subheader("Session")
     st.write("Active")
 
-col1, col2 = st.columns([3, 1])
+col1 = st.container()
 
 with col1:
     st.title("ScholarAgent")
@@ -163,34 +156,3 @@ with col1:
             "content": answer,
             "sources": sources
         })
-
-with col2:
-    st.markdown("## Agents")
-
-    st.markdown("""
-    <div class="agent-box">
-    Retrieval Agent<br>
-    Searching semantic chunks
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="agent-box">
-    Summary Agent<br>
-    Generating concise insights
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="agent-box">
-    Citation Agent<br>
-    Extracting references
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="agent-box">
-    Report Agent<br>
-    Creating structured output
-    </div>
-    """, unsafe_allow_html=True)
