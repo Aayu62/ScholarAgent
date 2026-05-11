@@ -1,186 +1,204 @@
 # ScholarAgent
 
-ScholarAgent is a document-first AI research assistant. Upload a PDF, then ask questions and get answers grounded in the document content using a Retrieval-Augmented Generation (RAG) pipeline.
+Multi-Agent AI Research Assistant built using FastAPI, Streamlit, FAISS, Gemini API, and Retrieval-Augmented Generation (RAG).
 
-This repository contains:
-- A FastAPI backend for PDF ingestion, vector indexing, retrieval, and answering
-- A Streamlit frontend that provides a chat UI with session history
+ScholarAgent enables users to upload research PDFs, perform semantic document search, generate contextual AI answers, extract citations, and download structured research reports through an interactive multi-agent workflow.
 
-## What It Does
+---
 
-1. Upload a PDF
-   - The backend saves the PDF to `data/uploads/`
-   - Text is extracted and split into overlapping chunks
+## Features
 
-2. Build a local vector index (FAISS)
-   - Each chunk is embedded using `sentence-transformers/all-MiniLM-L6-v2`
-   - Embeddings are stored in a local FAISS index under `data/vector_store/`
+* PDF Upload & Parsing
+* Retrieval-Augmented Generation (RAG)
+* Semantic Search using FAISS
+* Multi-Agent Workflow
+* Citation Extraction
+* Research Report Generation
+* Interactive Streamlit Research Workspace
+* Dockerized Deployment
 
-3. Ask questions (RAG chat)
-   - The backend retrieves the top-k most relevant chunks for your query
-   - Those chunks are used as context for a Gemini model call
-   - The response is returned along with the retrieved source snippets
+---
 
-## Features (Day 1 to Day 3)
+## Key Capabilities
 
-- PDF upload and processing
-- Text extraction and chunking
-- Local vector search with FAISS
-- RAG-based Q&A with retrieved sources
-- Streamlit chat UI with session memory (`st.session_state`)
+| Capability | Description |
+|---|---|
+| Semantic Search | Retrieves relevant document chunks using FAISS vector similarity |
+| Multi-Agent Workflow | Dedicated retrieval, summary, citation, and report agents |
+| Research Reports | Generates downloadable AI research summaries |
+| RAG Pipeline | Answers grounded only on uploaded documents |
+| Dockerized Deployment | Full containerized backend and frontend |
+
+---
+
+## Architecture
+
+```text
+                ┌─────────────────┐
+                │   Streamlit UI  │
+                └────────┬────────┘
+                         │
+                         ▼
+                ┌─────────────────┐
+                │   FastAPI API   │
+                └────────┬────────┘
+                         │
+        ┌────────────────┼────────────────┐
+        ▼                ▼                ▼
+ ┌────────────┐   ┌────────────┐   ┌────────────┐
+ │ PDF Parser │   │ RAG Engine │   │ Agent Core │
+ └────────────┘   └────────────┘   └────────────┘
+                         │
+                         ▼
+                ┌─────────────────┐
+                │ FAISS Vector DB │
+                └────────┬────────┘
+                         ▼
+                ┌─────────────────┐
+                │ Gemini API LLM  │
+                └─────────────────┘
+```
+
+---
 
 ## Tech Stack
 
-- Backend: Python, FastAPI, Uvicorn
-- Frontend: Streamlit
-- RAG / Retrieval: LangChain, FAISS (local), sentence-transformers (MiniLM)
-- LLM: Google Gemini via `google-genai`
+### Backend
 
-## Project Structure
+* FastAPI
+* LangChain
+* FAISS
+* Gemini API
 
-```text
-ScholarAgent/
-  backend/
-    main.py                  # FastAPI app (upload/query endpoints)
-    llm/
-      gemini_service.py      # Gemini client + prompt orchestration
-    rag/
-      pdf_processor.py       # PDF loading + chunking
-      vector_store.py        # FAISS create/load
-      query_engine.py        # Retrieval + context + answer
-  frontend/
-    app.py                   # Streamlit UI
-  data/
-    uploads/                 # Uploaded PDFs (local)
-    vector_store/            # FAISS index files (local)
-  requirements.txt
-  README.md
-```
+### Frontend
 
-## Setup
+* Streamlit
 
-### 1. Create and activate a virtual environment (recommended)
+### AI Components
 
-Windows PowerShell:
+* Retrieval-Augmented Generation (RAG)
+* Multi-Agent Workflow
+* Semantic Embeddings
 
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-```
+### Deployment
 
-### 2. Install dependencies
+* Docker
+* Docker Compose
 
-```powershell
+---
+
+## Installation
+
+```bash
+git clone https://github.com/Aayu62/ScholarAgent.git
+
+cd ScholarAgent
+
 pip install -r requirements.txt
 ```
 
-### 3. Configure environment variables
+---
 
-Create a `.env` file at the repo root:
+## Environment Variables
+
+Create a `.env` file:
 
 ```env
-GEMINI_API_KEY=your_key_here
-
-# Optional: override model (default is gemini-2.5-flash)
+GEMINI_API_KEY=your_api_key
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-## Run Locally
+---
 
-### 1. Start the backend (FastAPI)
+## API Endpoints
 
-```powershell
+### 📄 Upload PDF
+**POST** `/upload`  
+Uploads a PDF document, processes it, and indexes its contents for semantic search.
+
+---
+
+### 🔍 Query Documents
+**POST** `/query?query=<your-question>`  
+Submits a natural language question and returns an AI‑generated answer with supporting citations.
+
+---
+
+## Run Backend
+
+```bash
 uvicorn backend.main:app --reload
 ```
 
-- API root: `http://127.0.0.1:8000/`
-- Swagger docs: `http://127.0.0.1:8000/docs`
+---
 
-### 2. Start the frontend (Streamlit)
+## Run Frontend
 
-```powershell
+```bash
 streamlit run frontend/app.py
 ```
 
-Open: `http://127.0.0.1:8501`
+---
 
-## API Reference
+## Docker Deployment
 
-### POST `/upload`
-
-Uploads a PDF, extracts text, chunks it, and builds a FAISS index.
-
-Example (PowerShell):
-
-```powershell
-Invoke-RestMethod -Method Post `
-  -Uri "http://127.0.0.1:8000/upload" `
-  -Form @{ file = Get-Item ".\path\to\file.pdf" }
+```bash
+docker compose build
+docker compose up
 ```
 
-Response:
+---
 
-```json
-{
-  "message": "PDF processed succesfully",
-  "chunks": 42
-}
-```
+## Application Preview
 
-### POST `/query`
+### Home Screen
 
-Runs retrieval over the FAISS index and returns a Gemini-generated answer grounded in retrieved chunks.
+<p align="center">
+  <img src="assets/screenshots/Webpage.png" width="90%"/>
+</p>
 
-Example:
+---
 
-```powershell
-Invoke-RestMethod -Method Post `
-  -Uri "http://127.0.0.1:8000/query?query=What%20is%20this%20document%20about%3F"
-```
+### PDF Upload
 
-Response:
+<p align="center">
+  <img src="assets/screenshots/upload.png" width="90%"/>
+</p>
 
-```json
-{
-  "query": "What is this document about?",
-  "answer": "...",
-  "sources": ["...", "...", "...", "..."]
-}
-```
+---
 
-If no PDF has been uploaded yet (no vector index exists), the API returns a friendly message and empty sources.
+### Research Chat & Citations
 
-## How RAG Works Here
+<p align="center">
+  <img src="assets/screenshots/chat.png" width="45%"/>
+  <img src="assets/screenshots/citations.png" width="45%"/>
+</p>
 
-- Chunking: `RecursiveCharacterTextSplitter` splits PDF text into overlapping chunks.
-- Embedding: Each chunk is embedded using a lightweight sentence-transformer model (MiniLM).
-- Vector search: FAISS retrieves the most similar chunks to your query.
-- Answering: Gemini is prompted to answer using only the retrieved context.
+---
 
-## Notes and Limitations
+### Report Generation
 
-- The vector store is currently a single local index at `data/vector_store/`.
-  Uploading a new PDF overwrites the previous index (MVP behavior).
-- `FAISS.load_local(..., allow_dangerous_deserialization=True)` is used for convenience in local development.
-  Do not use that setting in untrusted environments.
-- Retrieval currently returns raw chunk text as "sources". Citation formatting is a roadmap item.
+<p align="center">
+  <img src="assets/screenshots/Research_report.png" width="90%"/>
+</p>
 
-## Troubleshooting
+---
 
-- `GEMINI_API_KEY is not configured.`
-  - Set `GEMINI_API_KEY` in `.env` and restart the backend.
+## Future Improvements
 
-- Backend works, but Streamlit cannot connect
-  - Confirm backend is running at `http://127.0.0.1:8000/`.
-  - Check Windows firewall prompts.
+* Persistent conversation memory
+* Multi-document comparison
+* PDF export
+* arXiv integration
+* Advanced citation formatting
+* CrewAI orchestration
 
-- Slow first run
-  - The embedding model may download on first use.
-  - Configure a Hugging Face token (`HF_TOKEN`) for higher rate limits if needed.
+---
 
-## Roadmap (Upcoming Days)
+## Author
 
-- Day 4: Multi-agent workflow (CrewAI): retrieval agent, summarizer agent, citation agent, report agent
-- Day 5: Report generation + better citation formatting + UI polish
-- Day 6: Docker + deployment (backend + frontend)
-- Day 7: Final polish, docs, demo assets, and resume-ready packaging
+Ayush Kumar
+
+## License
+
+MIT License
