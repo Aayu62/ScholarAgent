@@ -42,6 +42,19 @@ h1, h2, h3 {
     background-color: #1E2430;
     color: white;
 }
+.agent-card {
+    background-color: #161B22; 
+    padding: 12px;
+    border-radius: 6px;
+    text-align: center;
+    margin-bottom: 8px;
+    color: #ffffff;
+    font-size: 14px;
+    line-height: 1.4;
+    border: 1px solid #2A2F3A;
+}
+
+
 
 </style>
 """, unsafe_allow_html=True)
@@ -58,8 +71,8 @@ if "messages" not in st.session_state:
 with st.sidebar:
     st.title("ScholarAgent")
     st.markdown("---")
-
     st.subheader("Upload Documents")
+
     uploaded_file = st.file_uploader(
         "Upload Research Papers",
         type=["pdf"]
@@ -74,7 +87,7 @@ with st.sidebar:
             )
         }
 
-        with st.spinner("Processing PDF..."):
+        with st.spinner("Processing PDF and building vector index..."):
             try:
                 response = requests.post(
                     f"{API_URL}/upload",
@@ -92,67 +105,145 @@ with st.sidebar:
                     st.error(f"Upload failed: {response.text}")
 
     st.markdown("---")
-    st.subheader("Documents")
+    st.subheader("Knowledge Base")
     st.write("Uploaded PDFs are indexed into the active FAISS knowledge base.")
-
     st.markdown("---")
-    st.subheader("Session")
+    st.subheader("Session Status")
     st.write("Active")
 
-col1 = st.container()
+st.title("ScholarAgent")
+st.caption("Multi-Agent AI Research Assistant")
+st.markdown("### Research Workspace")
+
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+        citations = message.get("citations", [])
+        
+        if citations:
+            st.markdown("### Citations")   
+            for citation in citations:
+                st.markdown(
+                    f"""
+                    <div style="
+                        background-color:#1B2230;
+                        padding:12px;
+                        border-radius:10px;
+                        margin-bottom:10px;
+                        border-left:4px solid #5B8DEF;
+                    ">
+                    {citation}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+prompt = st.chat_input("Ask questions about your uploaded documents...")
+if prompt:
+    st.session_state.messages.append({
+        "role": "user",
+        "content": prompt,
+        "citations": []
+    })
+    with st.chat_message("user"):
+        st.write(prompt)
+    with st.chat_message("assistant"):
+        with st.spinner("Retrieval Agent searching vector database..."):
+            try:
+                response = requests.post(
+                    f"{API_URL}/query",
+                    params={"query": prompt},
+                    timeout=120
+                )
+                response.raise_for_status()
+                result = response.json()
+                st.info("Summary Agent generating response...")
+                answer = result.get("answer", "No answer returned.")
+                citations = result.get("citations", [])
+            except requests.RequestException as exc:
+                answer = f"Query failed: {exc}"
+                citations = []
+        st.markdown(answer)
+        if citations:
+            st.markdown("### Citations")
+            for citation in citations:
+                st.markdown(
+                    f"""
+                    <div style="
+                        background-color:#1B2230;
+                        padding:12px;
+                        border-radius:10px;
+                        margin-bottom:10px;
+                        border-left:4px solid #5B8DEF;
+                    ">
+                    {citation}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+        report_text = f"""
+        ScholarAgent Research Report
+        
+        Query:
+        {prompt}
+        
+        Generated Answer:
+        {answer}
+        
+        Citations:
+        """
+        
+        for citation in citations:
+            report_text += f"\n- {citation}\n"
+        
+        st.download_button(
+            label="Download Research Report",
+            data=report_text,
+            file_name="scholaragent_report.txt",
+            mime="text/plain"
+        )
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": answer,
+        "sources": citations
+    })
+
+st.markdown("---")
+st.markdown("## Active AI Agents")
+
+col1,col2,col3,col4 = st.columns(4)
 
 with col1:
-    st.title("ScholarAgent")
-    st.caption("Multi-Agent AI Research Assistant")
-    st.markdown("### Research Workspace")
+    st.markdown("""
+    <div class="agent-card">
+    🔍<br><br>
+    <b>Retrieval Agent</b><br>
+    Semantic Search
+    </div>
+    """, unsafe_allow_html=True)
 
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.write(message["content"])
-            sources = message.get("sources", [])
-            if sources:
-                with st.expander("Retrieved sources"):
-                    for source in sources:
-                        st.markdown(f"**Source {source['source']}**")
-                        st.write(source["content"])
+with col2:
+    st.markdown("""
+    <div class="agent-card">
+    🧠<br><br>
+    <b>Summary Agent</b><br>
+    AI Reasoning
+    </div>
+    """, unsafe_allow_html=True)
 
-    prompt = st.chat_input("Ask questions about your uploaded documents...")
+with col3:
+    st.markdown("""
+    <div class="agent-card">
+    📚<br><br>
+    <b>Citation Agent</b><br>
+    Source Extraction
+    </div>
+    """, unsafe_allow_html=True)
 
-    if prompt:
-        st.session_state.messages.append({
-            "role": "user",
-            "content": prompt,
-            "sources": []
-        })
-
-        with st.chat_message("user"):
-            st.write(prompt)
-
-        with st.chat_message("assistant"):
-            with st.spinner("Searching your documents..."):
-                try:
-                    response = requests.post(
-                        f"{API_URL}/query",
-                        params={"query": prompt},
-                        timeout=120
-                    )
-                    response.raise_for_status()
-                    result = response.json()
-                    answer = result.get("answer", "No answer returned.")
-                    sources = result.get("sources", [])
-                except requests.RequestException as exc:
-                    answer = f"Query failed: {exc}"
-                    sources = []
-
-            st.write(answer)
-            if sources:
-                with st.expander("Retrieved sources"):
-                    for source in sources:
-                        st.markdown(f"**Source {source['source']}**")
-                        st.write(source["content"])
-
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": answer,
-            "sources": sources
-        })
+with col4:
+    st.markdown("""
+    <div class="agent-card">
+    📝<br><br>
+    <b>Report Agent</b><br>
+    Research Reports
+    </div>
+    """, unsafe_allow_html=True)

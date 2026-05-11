@@ -13,8 +13,9 @@ def run_agents(query):
     citations = citation_agent(docs)
 
     final_report = report_agent(
-        answer,
-        citations
+        query=query,
+        answer=answer,
+        citations=citations
     )
 
     return final_report
